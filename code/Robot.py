@@ -51,10 +51,31 @@ class Robot:
         # to the base frame.
         frames = np.zeros((3, 3, self.dof + 1))
         n = self.dof
-        
-        # TODO:  FILL IN 3x3 HOMOGENEOUS TRANSFORM FOR n + 1 FRAMES
-        # You'll need to implement the forward kinematics calculation here
-        
+
+        frames[:, :, 0] = np.eye(3) # Initialize the base frame as the identity matrix
+
+        for i in range(n): # Iterate over each frame we need to translate between
+            
+            assert(i < n) # For good measure. i \in [0, n-1]
+
+            # Rotation: Grab theta and create relevant trig
+            theta = thetas[i][0] # Must decompose from 1-1 array to a scalar
+            c = np.cos(theta)
+            s = np.sin(theta)
+
+            # Translation: Translate along positive x by link length
+            tx = self.link_lengths[i][0] # Must decompose from 1-1 array to a scalar
+
+            # Create homogeneous transform matrix for H^i_{i+1}
+            this_H = np.array([ 
+                [c, -s, tx * c], # idk apply the x transform in the rotated frame. I guess one could do
+                [s,  c, tx * s], # a pure x translation first and then rotate the whole thing, but this
+                [0,  0,      1]  # is not meaningfully more complex
+                ])
+
+            # Let the i+1th H be the product of the ith H and the current H
+            base_frame = frames[:, :, i] 
+            frames[:, :, i+1] = base_frame @ this_H
         
         return frames
 
